@@ -33,8 +33,9 @@ export class Parser {
     factor() {
         let tok = this.cur;
 
-        if (!tok)
-            error(undefined, 'expected something, but EOF', this.context);
+        if (!tok) {
+            error(undefined, "expected something, but EOF", this.context);
+        }
 
         if (tok.type == "newline") {
             this.advance();
@@ -46,7 +47,7 @@ export class Parser {
             return new VarAccessNode(tok);
         }
 
-        if (["plus", "minus", "not"].includes(tok.type)) {
+        if (["plus", "minus", "not", "bnot"].includes(tok.type)) {
             this.advance();
             return new UnaryOpNode(tok, this.factor());
         }
@@ -73,7 +74,7 @@ export class Parser {
             error(this.cur.loc, "Expected ')'");
         }
 
-        error(tok.loc, `expected number, but found ${tok.type}: ${tok.value}`);
+        error(tok.loc, `expected literal, but found ${tok.type}: ${tok.value}`);
     }
 
     binOp(func, ops) {
@@ -90,7 +91,7 @@ export class Parser {
     }
 
     term() {
-        return this.binOp(this.factor, ["asterisk", "slash", "power"]);
+        return this.binOp(this.factor, ["asterisk", "slash", "power", "percent", "shiftleft", "shiftright", "mod"]);
     }
 
     expr() {
@@ -104,7 +105,7 @@ export class Parser {
             const name = this.cur;
             this.advance();
 
-            if (this.cur.type != "equal")
+            if (this.cur.type != "assign")
                 error(this.cur.loc, `expected '=', but got ${this.cur}`);
 
             const assignLoc = this.cur.loc;
@@ -113,7 +114,7 @@ export class Parser {
             return new VarAssignNode(assignLoc, name, this.expr());
         }
 
-        let node = this.binOp(this.term, ["plus", "minus", "isequal", "notequal"]);
+        let node = this.binOp(this.term, ["plus", "minus", "isequal", "notequal", "bor", "xor", "band", "or", "and", "less", "greater", "lessequal", "greaterequal"]);
 
         return node;
     }

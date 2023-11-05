@@ -17,7 +17,7 @@ export class Interpreter {
         const value = context.varTable.get(name);
 
         if (!value)
-            error(node.tok.loc, `${name} is not defined`, context);
+            error(node.tok.loc, `"${name}" is not defined`, context);
 
         return value;
     }
@@ -41,6 +41,17 @@ export class Interpreter {
             case "power": return new Number(left.loc, left.value ** right.value, context);
             case "isequal": return new Boolean(left.loc, left.value == right.value, context);
             case "notequal": return new Boolean(left.loc, left.value != right.value, context);
+            case "modulo": return new Number(left.loc, left.value % right.value, context);
+            case "shiftleft": return new Number(left.loc, left.value << right.value, context);
+            case "shiftright": return new Number(left.loc, left.value >> right.value, context);
+            case "xor": return new Number(left.loc, left.value ^ right.value, context);
+            case "bor": return new Number(left.loc, left.value | right.value, context);
+            case "band": return new Number(left.loc, left.value & right.value, context);
+            case "less": return new Boolean(left.loc, left.value < right.value, context);
+            case "greater": return new Boolean(left.loc, left.value > right.value, context);
+            case "lessequal": return new Boolean(left.loc, left.value <= right.value, context);
+            case "greaterequal": return new Boolean(left.loc, left.value >= right.value, context);
+            case "mod": return new Number(left.loc, left.value % right.value, context);
             case "slash": {
                 if (right.value == 0)
                     error(right.loc, "can't divide by zero", context);
@@ -56,6 +67,7 @@ export class Interpreter {
         switch (node.op.type) {
             case "minus": value = new Number(value.loc, -value.value, context); break;
             case "not": value = new Boolean(value.loc, !value.value, context); break;
+            case "bnot": value = new Number(value.loc, ~value.value, context); break;
         }
 
         return value;

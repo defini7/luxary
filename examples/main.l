@@ -1,1 +1,1 @@
-var a = "Hello, World!"
+var a = 2 << 3

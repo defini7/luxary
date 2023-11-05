@@ -7,15 +7,28 @@ const TOKENS = {
     "-": "minus",
     "*": "asterisk",
     "/": "slash",
+    "%": "mod",
     "**": "power",
+    "|": "bor",
+    "||": "or",
+    "&": "band",
+    "&&": "and",
+    "^": "xor",
+    "~": "bnot",
+    "<<": "shiftleft",
+    ">>": "shiftright",
+    "<": "less",
+    ">": "greater",
+    "<=": "lessequal",
+    ">=": "greaterequal",
     "==": "isequal",
     "!=": "notequal",
     "!": "not",
-    "=": "equal",
+    "=": "assign",
 };
 
 const KEYWORDS = [
-    "var"
+    "var",
 ];
 
 function isAlpha(c) { return /^[A-Z]$/i.test(c); };
@@ -31,10 +44,11 @@ export function error(loc, msg, context) {
         ctx = context.parent;
     }
 
-    if (loc)
+    if (loc) {
         console.error('%s: ERROR: %s', loc, msg);
-    else
+    } else {
         console.error('ERROR: %s', msg);
+    }
 
     exit(1);
 }

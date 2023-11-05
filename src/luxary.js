@@ -63,6 +63,7 @@ let ast = parser.parse();
 
 while (ast) {
     const res = interpreter.visit(ast, context).toString();
+    console.log(res);
     ast = parser.parse();
     
     console.log(res);
