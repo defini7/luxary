@@ -3,8 +3,11 @@
     "scripts": {
         "dev": "node src/luxary.js examples/main.l"
     },
-    "engines": { 
+    "engines": {
         "node": ">=20.9.0"
     },
-    "engineStrict": true
+    "engineStrict": true,
+    "dependencies": {
+        "readline-sync": "^1.4.10"
+    }
 }

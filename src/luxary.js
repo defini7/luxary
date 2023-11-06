@@ -3,6 +3,7 @@ import { argv } from 'process';
 import { Parser } from './parser.js';
 import { Lexer } from './lexer.js';
 import { Interpreter } from './interpreter.js';
+import { BuiltInFunction } from './nodes.js';
 
 export class VarTable {
     
@@ -43,6 +44,18 @@ globalVars.set("null", new Number(0));
 globalVars.set("true", new Boolean(true));
 globalVars.set("false", new Boolean(false));
 
+const registerBuiltIn = (name) => {
+    globalVars.set(name, new BuiltInFunction(undefined, globalVars, name));
+}
+
+registerBuiltIn("print");
+registerBuiltIn("input");
+registerBuiltIn("number");
+registerBuiltIn("string");
+registerBuiltIn("at");
+registerBuiltIn("concat");
+registerBuiltIn("push");
+
 const filePath = argv[2];
 const source = readFileSync(filePath).toString();
 
@@ -66,6 +79,6 @@ while (ast) {
     ast = parser.parse();
     
     if (res != undefined) {
-        console.log(res.toString());
+        
     }
 }

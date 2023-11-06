@@ -3,6 +3,8 @@ import { exit } from 'process';
 const TOKENS = {
     "(": "lparen",
     ")": "rparen",
+    "[": "lbracket",
+    "]": "rbracket",
     "+": "plus",
     "-": "minus",
     "*": "asterisk",
@@ -41,8 +43,8 @@ const KEYWORDS = [
     "function"
 ];
 
-function isAlpha(c) { return /^[A-Z]$/i.test(c); };
-function isAlnum(c) { return /^[A-Z0-9]$/i.test(c); };
+function isAlpha(c) { return /^[A-Z_]$/i.test(c); };
+function isAlnum(c) { return /^[A-Z0-9_]$/i.test(c); };
 function isDigit(c) { return /^[0-9]/.test(c); }
 
 export function error(loc, msg, context) {

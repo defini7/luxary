@@ -1,5 +1,5 @@
 import { error } from "./lexer.js";
-import { Number, String, Boolean, Function } from "./nodes.js";
+import { Number, String, Boolean, Function, List } from "./nodes.js";
 
 export class Interpreter {
 
@@ -14,11 +14,14 @@ export class Interpreter {
 
     visitVarAccessNode(node, context) {
         const name = node.tok.value;
-        const value = context.varTable.get(name);
+        let value = context.varTable.get(name);
 
-        if (!value)
+        if (!value) {
             error(node.tok.loc, `"${name}" is not defined`, context);
+        }
 
+        value = value.copy();
+        value.context = context;
         return value;
     }
 
@@ -96,6 +99,7 @@ export class Interpreter {
     }
 
     visitWhileNode(node, context) {
+        let elements = [];
         while (1) {
             const condition = this.visit(node.condition, context);
 
@@ -103,8 +107,10 @@ export class Interpreter {
                 break;
             }
 
-            this.visit(node.body, context);
+            elements.push(this.visit(node.body, context));
         }
+
+        return new List(node.loc, context, elements);
     }
 
     visitForNode(node, context) {
@@ -115,22 +121,25 @@ export class Interpreter {
         let i = startValue.value;
         const condition = (stepValue >= 0) ? () => { return i <= endValue.value } : () => { return i >= endValue.value };
         
+        let elements = [];
         while (condition()) {
             context.varTable.set(node.varName.value, new Number(node.varName.loc, i, context));
             i += stepValue;
 
-            this.visit(node.body, context);
+            elements.push(this.visit(node.body, context));
         }
+        
+        return new List(node.loc, context, elements);
     }
 
     visitFuncDefNode(node, context) {
         let args = [];
-        for (const arg of node.args) { args.push(arg.value) }
+        for (const arg of node.args) { args.push(arg.value); }
 
-        const func = new Function(node.loc, context, node.name ? node.name.value : undefined, args, node.body);
+        const func = new Function(node.loc, context, node.value ? node.value.value : undefined, args, node.body);
 
-        if (node.name) {
-            context.varTable.set(node.name.value, func);
+        if (node.value) {
+            context.varTable.set(node.value.value, func);
         }
 
         return func;
@@ -147,5 +156,15 @@ export class Interpreter {
         }
 
         return call.execute(args);
+    }
+
+    visitListNode(node, context) {
+        let elements = [];
+
+        for (const elem of node.tok) {
+            elements.push(this.visit(elem, context));
+        }
+
+        return new List(node.loc, context, elements);
     }
 }

@@ -1,4 +1,4 @@
-import { NumberNode, StringNode, BinOpNode, UnaryOpNode, VarAccessNode, VarAssignNode, IfNode, ForNode, WhileNode, FuncDefNode, FuncCallNode } from './nodes.js';
+import { NumberNode, StringNode, BinOpNode, UnaryOpNode, VarAccessNode, VarAssignNode, IfNode, ForNode, WhileNode, FuncDefNode, FuncCallNode, ListNode } from './nodes.js';
 import { error } from './lexer.js';
 
 export class Parser {
@@ -45,7 +45,7 @@ export class Parser {
 
         if (tok.type == "newline") {
             this.advance();
-            return this.expr();
+            return this.parse();
         }
         
         if (tok.type == "identifier") {
@@ -78,6 +78,31 @@ export class Parser {
             }
             
             error(this.cur.loc, "Expected ')'", this.context);
+        }
+
+        if (tok.type == "lbracket") {
+            this.advance();
+
+            let elements = [];
+
+            if (this.cur.type == "rbracket") {
+                this.advance();
+            } else {
+                elements.push(this.expr());
+
+                while (this.cur.type == "comma") {
+                    this.advance();
+                    elements.push(this.expr());
+                }
+
+                if (this.cur.type != "rbracket") {
+                    error(this.cur.loc, `expected "," or "]", but got ${this.cur}`);
+                }
+
+                this.advance();
+            }
+
+            return new ListNode(elements);
         }
 
         error(tok.loc, `expected literal, but found ${tok.type}: ${tok.value}`, this.context);
