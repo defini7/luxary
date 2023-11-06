@@ -37,7 +37,8 @@ const KEYWORDS = [
     "end",
     "while",
     "for",
-    "do"
+    "do",
+    "function"
 ];
 
 function isAlpha(c) { return /^[A-Z]$/i.test(c); };

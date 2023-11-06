@@ -6,9 +6,9 @@ import { Interpreter } from './interpreter.js';
 
 export class VarTable {
     
-    constructor() {
+    constructor(parent=undefined) {
         this.vars = {};
-        this.parent = undefined;
+        this.parent = parent;
     }
 
     get(name) {

@@ -1,4 +1,4 @@
-import { NumberNode, StringNode, BinOpNode, UnaryOpNode, VarAccessNode, VarAssignNode, IfNode, ForNode, WhileNode } from './nodes.js';
+import { NumberNode, StringNode, BinOpNode, UnaryOpNode, VarAccessNode, VarAssignNode, IfNode, ForNode, WhileNode, FuncDefNode, FuncCallNode } from './nodes.js';
 import { error } from './lexer.js';
 
 export class Parser {
@@ -7,6 +7,7 @@ export class Parser {
         this.term = this.term.bind(this);
         this.expr = this.expr.bind(this);
         this.factor = this.factor.bind(this);
+        this.call = this.call.bind(this);
 
         this.tokens = tokens;
         this.tokIdx = -1;
@@ -95,7 +96,37 @@ export class Parser {
     }
 
     term() {
-        return this.binOp(this.factor, ["asterisk", "slash", "power", "percent", "shiftleft", "shiftright", "mod"]);
+        return this.binOp(this.call, ["asterisk", "slash", "power", "percent", "shiftleft", "shiftright", "mod"]);
+    }
+
+    call() {
+        const factor = this.factor();
+        
+        if (this.cur.type == "lparen") {
+            this.advance();
+            let args = [];
+
+            if (this.cur.type == "rparen") {
+                this.advance();
+            } else {
+                args.push(this.expr());
+
+                while (this.cur.type == "comma") {
+                    this.advance();
+                    args.push(this.expr());
+                }
+
+                if (this.cur.type != "rparen") {
+                    error(this.cur.loc, `expected "," or ")", but got ${this.cur}`, context);
+                }
+
+                this.advance();
+            }
+
+            return new FuncCallNode(factor, args);
+        }
+
+        return factor;
     }
 
     expr() {
@@ -225,6 +256,57 @@ export class Parser {
                 this.advance();
                 
                 return new ForNode(varName, startValue, endValue, stepValue, body);
+            },
+
+            "function": () => {
+                this.advance();
+
+                let name;
+                if (this.cur.type == "identifier") {
+                    name = this.cur;
+                    this.advance();                
+                }
+
+                if (this.cur.type != "lparen") {
+                    error(this.cur.loc, `expected "(", but got ${this.cur}`, this.context);
+                }
+
+                this.advance();
+                let args = [];
+
+                if (this.cur.type == "identifier") {
+                    args.push(this.cur);
+                    this.advance();
+
+                    while (this.cur.type == "comma") {
+                        this.advance();
+
+                        if (this.cur.type != "identifier") {
+                            error(this.cur.loc, `expected "identifier", but got ${this.cur}`, this.context);
+                        }
+
+                        args.push(this.cur);
+                        this.advance();
+                    }
+
+                    if (this.cur.type != "rparen") {
+                        error(this.cur.loc, `expected ")", but got ${this.cur}`, this.context);
+                    }
+                } else {
+                    if (this.cur.type != "rparen") {
+                        error(this.cur.loc, `expected ")", but got ${this.cur}`, this.context);
+                    }
+                }
+
+                this.advance();
+                const body = this.expr();
+
+                if (!this.cur.matches("keyword", "end")) {
+                    error(this.cur.loc, `expected "end", but got ${this.cur}`, this.context);
+                }
+
+                this.advance();
+                return new FuncDefNode(name, args, body);
             }
 
         };

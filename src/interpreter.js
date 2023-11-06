@@ -1,5 +1,5 @@
 import { error } from "./lexer.js";
-import { Number, String, Boolean } from "./nodes.js";
+import { Number, String, Boolean, Function } from "./nodes.js";
 
 export class Interpreter {
 
@@ -82,11 +82,11 @@ export class Interpreter {
     }
 
     visitIfNode(node, context) {
-        for (let i = 0; i < node.cases.length; i++) {
-            const conditionVal = this.visit(node.cases[i][0], context);
+        for (const ifCase of node.cases) {
+            const conditionVal = this.visit(ifCase[0], context);
 
             if (conditionVal.value != 0) {
-                return this.visit(node.cases[i][1], context);
+                return this.visit(ifCase[1], context);
             }
         }
 
@@ -121,5 +121,31 @@ export class Interpreter {
 
             this.visit(node.body, context);
         }
+    }
+
+    visitFuncDefNode(node, context) {
+        let args = [];
+        for (const arg of node.args) { args.push(arg.value) }
+
+        const func = new Function(node.loc, context, node.name ? node.name.value : undefined, args, node.body);
+
+        if (node.name) {
+            context.varTable.set(node.name.value, func);
+        }
+
+        return func;
+    }
+
+    visitFuncCallNode(node, context) {
+        let call = this.visit(node.node, context);
+        call = call.copy();
+        call.loc = node.node.tok.loc;
+
+        let args = [];
+        for (const arg of node.args) {
+            args.push(this.visit(arg, context));
+        }
+
+        return call.execute(args);
     }
 }

@@ -1,3 +1,7 @@
+import { Interpreter } from "./interpreter.js";
+import { Context, VarTable } from "./luxary.js";
+import { error } from "./lexer.js";
+
 class BaseNode {
     constructor(tok) {
         this.tok = tok;
@@ -34,16 +38,11 @@ export class UnaryOpNode {
     }
 }
 
-class Base {
+class Value {
     constructor(loc, value, context = undefined) {
         this.loc = loc;
         this.value = value;
         this.context = context;
-    }
-
-    setContext(context = undefined) {
-        this.context = context;
-        return this;
     }
 
     toString() {
@@ -51,23 +50,47 @@ class Base {
     }
 }
 
-export class Number extends Base {}
-export class String extends Base {}
+export class Number extends Value {}
+export class String extends Value {}
+export class Boolean extends Value {}
 
-export class Boolean {
-    constructor(loc, value, context = undefined) {
-        this.loc = loc;
-        this.value = value;
-        this.context = context;
+export class Function extends Value {
+    constructor(loc, context, name, args, body) {
+        super(loc, undefined, context);
+
+        this.name = name || "<lambda>";
+        this.args = args;
+        this.body = body;
     }
 
-    setContext(context = undefined) {
-        this.context = context;
-        return this;
+    execute(args) {
+        const interpreter = new Interpreter();
+
+        let ctx = new Context(this.name, this.context, this.loc);
+        ctx.varTable = new VarTable(ctx.parent ? ctx.parent.varTable : undefined);
+
+        if (args.length > this.args.length) {
+            error(this.loc, `${args.length - this.args.length} too many arguments pased into "${this.name}"`, this.context);
+        }
+
+        if (args.length < this.args.length) {
+            error(this.loc, `${this.args.length - args.length} too few arguments pased into "${this.name}"`, this.context);
+        }
+
+        for (let i = 0; i < args.length; i++) {
+            args[i].context = ctx;
+            ctx.varTable.set(this.args[i], args[i]);
+        }
+
+        return interpreter.visit(this.body, ctx);
+    }
+
+    copy() {
+        return new Function(this.context, this.loc, this.name, this.args, this.body);
     }
 
     toString() {
-        return this.value.toString();
+        return `<function ${this.name}>`;
     }
 }
 
@@ -106,5 +129,20 @@ export class ForNode {
         this.endValue = endValue;
         this.stepValue = stepValue;
         this.body = body;
+    }
+}
+
+export class FuncDefNode {
+    constructor(name, args, body) {
+        this.name = name;
+        this.args = args;
+        this.body = body;
+    }
+}
+
+export class FuncCallNode {
+    constructor(node, args) {
+        this.node = node;
+        this.args = args;
     }
 }
