@@ -6,7 +6,7 @@ export class Interpreter {
     visit(node, context) {
         const methodName = `visit${node.constructor.name}`;
         if (!this[methodName]) {
-            error(node.loc, 'this operation is not implemented', context);
+            error(node.loc, `operation "${methodName}" is not implemented`, context);
         }
         
         return this[methodName](node, context);
@@ -79,5 +79,47 @@ export class Interpreter {
 
     visitStringNode(node, context) {
         return new String(node.tok.loc, node.tok.value, context);
+    }
+
+    visitIfNode(node, context) {
+        for (let i = 0; i < node.cases.length; i++) {
+            const conditionVal = this.visit(node.cases[i][0], context);
+
+            if (conditionVal.value != 0) {
+                return this.visit(node.cases[i][1], context);
+            }
+        }
+
+        if (node.elseCase) {
+            return this.visit(node.elseCase, context);
+        }
+    }
+
+    visitWhileNode(node, context) {
+        while (1) {
+            const condition = this.visit(node.condition, context);
+
+            if (condition.value == 0) {
+                break;
+            }
+
+            this.visit(node.body, context);
+        }
+    }
+
+    visitForNode(node, context) {
+        const startValue = this.visit(node.startValue, context);
+        const endValue = this.visit(node.endValue, context);
+        const stepValue = node.stepValue ? this.visit(node.stepValue, context).value : 1;
+
+        let i = startValue.value;
+        const condition = (stepValue >= 0) ? () => { return i <= endValue.value } : () => { return i >= endValue.value };
+        
+        while (condition()) {
+            context.varTable.set(node.varName.value, new Number(node.varName.loc, i, context));
+            i += stepValue;
+
+            this.visit(node.body, context);
+        }
     }
 }

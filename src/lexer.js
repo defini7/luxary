@@ -25,10 +25,19 @@ const TOKENS = {
     "!=": "notequal",
     "!": "not",
     "=": "assign",
+    ",": "comma"
 };
 
 const KEYWORDS = [
     "var",
+    "if",
+    "then",
+    "else",
+    "elif",
+    "end",
+    "while",
+    "for",
+    "do"
 ];
 
 function isAlpha(c) { return /^[A-Z]$/i.test(c); };
@@ -75,7 +84,7 @@ class Token {
     }
 
     matches(type, value) {
-        return (this.type == type && this.value == value);
+        return this.type == type && this.value == value;
     }
 
     toString() {
@@ -113,16 +122,18 @@ export class Lexer {
         }
     }
 
-    trim_left() {
-        while (!this.eof() && this.current() == " " && this.current() != "\n")
+    trimLeft() {
+        while (!this.eof() && this.current() == " " && this.current() != "\n") {
             this.chop();
+        }
     }
 
-    drop_line() {
-        while (!this.eof() && !["\n", "\r"].includes(this.current()))
+    dropLine() {
+        while (!this.eof() && !["\n", "\r"].includes(this.current())) {
             this.chop();
+        }
 
-        if (!this.eof()) this.chop();
+        this.chop();
     }
 
     loc() {
@@ -131,27 +142,29 @@ export class Lexer {
 
     next_token() {
         // Skip all whitespaces
-        this.trim_left();
+        this.trimLeft();
 
         while (!this.eof()) {
             const s = this.source.substring(this.cur);
-            if (!s.startsWith("#")) break; // skip comments
-            this.drop_line();
-            this.trim_left();
+            if (!s.startsWith("--")) break; // skip comments
+            this.dropLine();
+            this.trimLeft();
+            this.chop();
         }
 
-        if (this.eof()) return undefined;
-
         if (["\n", "\r"].includes(this.current())) {
-            this.drop_line();
-            this.trim_left();
-            this.chop();
+            this.dropLine();
+            this.trimLeft();
 
             return new Token(this.loc(), "newline", "\n");
         }
 
         const loc = this.loc();
         const first = this.current();
+
+        if (!first) {
+            return new Token(loc, "eof", undefined);
+        }
 
         // Identifier | Keyword
         if (isAlpha(first)) {
@@ -160,13 +173,14 @@ export class Lexer {
                 this.chop();
 
             const value = this.source.substring(i, this.cur);
-            return new Token(loc, (KEYWORDS.indexOf(value) != -1) ? "keyword" : "identifier", value);
+            return new Token(loc, (KEYWORDS.indexOf(value) == -1) ? "identifier" : "keyword", value);
         }
 
         // Operator
         let i = this.cur;
-        while (!isAlnum(this.source[i]) && this.source[i] != " " && i < this.source.length)
+        while (!isAlnum(this.source[i]) && this.source[i] != " " && i < this.source.length) {
             i++;
+        }
 
         let op = this.source.substring(this.cur, i);
         while (!TOKENS[op] && op.length != 0) {
@@ -246,6 +260,6 @@ export class Lexer {
             return new Token(loc, "number", this.source.substring(start, this.cur));
         }
 
-        error(loc, `unknown token starts with '${first}'`, this.context);
+        error(loc, `unknown token starts with "${first}"`, this.context);
     }
 }

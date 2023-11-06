@@ -62,9 +62,10 @@ const interpreter = new Interpreter();
 let ast = parser.parse();
 
 while (ast) {
-    const res = interpreter.visit(ast, context).toString();
-    console.log(res);
+    const res = interpreter.visit(ast, context);
     ast = parser.parse();
     
-    console.log(res);
+    if (res != undefined) {
+        console.log(res.toString());
+    }
 }

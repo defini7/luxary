@@ -84,3 +84,27 @@ export class VarAccessNode {
         this.tok = tok;
     }
 }
+
+export class IfNode {
+    constructor(cases, elseCase) {
+        this.cases = cases;
+        this.elseCase = elseCase;
+    }
+}
+
+export class WhileNode {
+    constructor(condition, body) {
+        this.condition = condition;
+        this.body = body;
+    }
+}
+
+export class ForNode {
+    constructor(varName, startValue, endValue, stepValue, body) {
+        this.varName = varName;
+        this.startValue = startValue;
+        this.endValue = endValue;
+        this.stepValue = stepValue;
+        this.body = body;
+    }
+}
